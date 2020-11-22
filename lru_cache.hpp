@@ -16,15 +16,15 @@
  * =====================================================================================
  */
 
-#ifndef CONTAINER_LRU_CACHE_HPP_
-#define CONTAINER_LRU_CACHE_HPP_
+#ifndef UTILITY_LRU_CACHE_HPP_
+#define UTILITY_LRU_CACHE_HPP_
 
 #include <list>
 #include <memory>
 #include <unordered_map>
 #include <utility>
 
-namespace container {
+namespace utility {
 
 template<class Key, 
          class T, 
@@ -84,7 +84,7 @@ public:
         : list_(alloc), 
           map_(capacity, hash, equal, alloc), 
           capacity_(capacity) {
-        Insert(first, last);
+        insert(first, last);
     }
 
     lru_cache(const lru_cache& other) 
@@ -119,7 +119,7 @@ public:
         : list_(alloc), 
           map_(capacity, hash, equal, alloc), 
           capacity_(capacity) {
-        Insert(init);
+        insert(init);
     }
 
     ~lru_cache() {
@@ -357,10 +357,7 @@ public:
         if (map_.end() == map_it) {
             return list_.end();
         } else {
-            auto list_it = list_.insert(list_.end(), *map_it->second);
-            list_.erase(map_it->second);
-            map_it->second = list_it;
-            return list_it;
+            return map_it->second;
         }
     }
 
@@ -379,15 +376,13 @@ public:
 
     std::pair<const_iterator, const_iterator> equal_range(const Key& key) const {
         auto map_equal_range_result = map_.equal_range(key);
-        for (auto map_it = map_equal_range_result.first; 
-                map_it != map_equal_range_result.second 
-                && map_it != map_.end(); ++map_it) {
-            auto list_it = list_.insert(list_.end(), *map_it->second);
-            list_.erase(map_it->second);
-            map_it->second = list_it;
+        if (map_.end() != map_equal_range_result.second) {
+            return std::make_pair(map_equal_range_result.first->second, 
+                                  map_equal_range_result.second->second);
+        } else {
+            return std::make_pair(map_equal_range_result.first->second, 
+                                  list_.end());
         }
-
-        return std::make_pair(map_equal_range_result.first->second, list_.end());
     }
 
 private:
@@ -396,6 +391,6 @@ private:
     size_type capacity_;
 };
 
-} // namespace container
+} // namespace utility
 
-#endif // CONTAINER_LRU_CACHE_HPP_
+#endif // UTILITY_LRU_CACHE_HPP_
